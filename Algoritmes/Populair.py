@@ -22,8 +22,8 @@ def aanbied(cursor):
         optellen = []
 
         for i in producten: # Kijkt hoe vaak een product is verkocht en kijkt ook welk product het is
-            populair.append(prod.count(i))
-            optellen.append(i[0]])
+            optellen.append(prod.count(i))
+            populair.append(i[0]])
 
         top10 = []
 
