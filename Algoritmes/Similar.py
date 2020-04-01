@@ -163,7 +163,9 @@ def price(prodid, naam, zoeken, search, target, type, status):
     else:
         prijsrangemax = prijs * 1.25
         prijsrangemin = prijs // 1.25
-    cursor.execute('select id from producten where ' + zoeken + ' = (%s) and target_audienceid = (%s) and typeid = (%s) and verkoopprijs > (%s) and verkoopprijs <= (%s)',(search, target, type, int(prijsrangemin), int(prijsrangemax)))
+    cursor.execute('select id from producten where ' + zoeken +\
+                   ' = (%s) and target_audienceid = (%s) and typeid = (%s) and verkoopprijs > (%s) and verkoopprijs <= (%s)',\
+                   (search, target, type, int(prijsrangemin), int(prijsrangemax)))
     ding = cursor.fetchall()
     lijst6 = []
     for i in ding:
