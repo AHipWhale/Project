@@ -185,7 +185,9 @@ def price(prodid, naam, zoeken, search, target, type, status):
 def brand(prodid, naam, zoeken, search, target, type, prijsrangemax, prijsrangemin, status):
     cursor.execute('select merkid from producten where id = (%s)', (prodid,))
     merk = cursor.fetchall()[0][0]
-    cursor.execute('select id from producten where ' + zoeken + ' = (%s) and target_audienceid = (%s) and typeid = (%s) and verkoopprijs >= (%s) and verkoopprijs <= (%s) and merkid = (%s)',(search, target, type, int(prijsrangemin), int(prijsrangemax), merk))
+    cursor.execute('select id from producten where ' + zoeken +\
+                   '= (%s) and target_audienceid = (%s) and typeid = (%s) and verkoopprijs >= (%s) and verkoopprijs <= (%s) and merkid = (%s)',\
+                   (search, target, type, int(prijsrangemin), int(prijsrangemax), merk))
     burn = cursor.fetchall()
     lijst7 = []
     for i in burn:
