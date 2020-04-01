@@ -2,18 +2,16 @@ import psycopg2
 import csv
 import random
 
-c = psycopg2.connect("dbname=AI_gr user=postgres password=1")
+c = psycopg2.connect("dbname=(voer naam van je database in) user=postgres password=(voer je wachtwoord in)") # Vul zelf in
 cursor = c.cursor()
+
 
 def similar(prodid):
     prodid = str(prodid)
-
     cursor.execute('select sub_sub_categorieid, naam from producten where id = (%s)', (prodid,))
     iets = cursor.fetchall()[0]
-
     subsubcat = iets[0]
     productnaam = iets[1]
-
     cursor.execute('select id from producten where sub_sub_categorieid = (%s)', (subsubcat,))
     tussen = cursor.fetchall()
 
@@ -21,7 +19,6 @@ def similar(prodid):
     for i in tussen:
         lijst.append(i[0])
     lijst.remove(prodid)
-    #print(len(lijst))
 
     if subsubcat == 74:
         subcategorie(prodid, productnaam)
@@ -36,6 +33,7 @@ def similar(prodid):
     else:
         woord(prodid, productnaam)
 
+
 def klaar(prodid, naam, voorkeurlijst, lijst):
     print(voorkeurlijst)
     print(lijst)
@@ -43,18 +41,15 @@ def klaar(prodid, naam, voorkeurlijst, lijst):
         voorkeurlijst.remove('remove')
     if 'remove' in lijst:
         lijst.remove('remove')
-    #print('lijst '+str(lijst))
-    #print('voorkeurlijst '+str(voorkeurlijst))
-    if lijst != []:
+
+    if lijst!=[]:
         lijst = modnar(lijst)
         lengte = 4 - len(voorkeurlijst)
         for i in range(lengte):
-            #print(i, voorkeurlijst)
             voorkeurlijst.append(lijst[i])
     else:
         if len(voorkeurlijst) > 4:
             voorkeurlijst = modnar(voorkeurlijst)
-    #print(voorkeurlijst)
     with open('simielr.csv', 'w', newline='') as csvfile:
         fieldnames = ['productid', 'productnaam', 'pd_1', 'pd_2', 'pd_3', 'pd_4']
 
@@ -70,18 +65,16 @@ def klaar(prodid, naam, voorkeurlijst, lijst):
                          })
         csvfile.close()
 
+
 def categorie(prodid, naam):
     cursor.execute('select categorieid from producten where id = (%s)', (prodid,))
     cat = cursor.fetchall()[0][0]
-    #print('id: ' + str(subcat[0][0]))
     cursor.execute('select id from producten where categorieid = (%s)', (cat,))
     terug = cursor.fetchall()
     lijst3 = []
     for i in terug:
         lijst3.append(i[0])
     lijst3.remove(prodid)
-    #print(len(lijst3), lijst3)
-
     if len(lijst3) >= 4 and len(lijst3) <= 10:
         klaar(prodid, naam, lijst3, [])
     elif len(lijst3) > 10:
@@ -89,18 +82,16 @@ def categorie(prodid, naam):
     elif len(lijst3) < 4:
         woord(prodid, naam)
 
+
 def subcategorie(prodid, naam):
     cursor.execute('select sub_categorieid from producten where id = (%s)', (prodid,))
     subcat = cursor.fetchall()[0][0]
-    #print('id: '+str(subcat))
     cursor.execute('select id from producten where sub_categorieid = (%s)', (subcat,))
     terug = cursor.fetchall()
     lijst2 = []
     for i in terug:
         lijst2.append(i[0])
     lijst2.remove(prodid)
-    #print(len(lijst2), lijst2)
-
     if len(lijst2) >= 4 and len(lijst2) <= 10:
         klaar(prodid, naam, lijst2, [])
     elif len(lijst2) > 10:
@@ -108,18 +99,16 @@ def subcategorie(prodid, naam):
     elif len(lijst2) < 4:
         categorie(prodid, naam)
 
+
 def target_audience(prodid, naam, zoeken, search, status):
     cursor.execute('select target_audienceid from producten where id = (%s)', (prodid,))
     target = cursor.fetchall()[0][0]
-    #print(target)
-
     cursor.execute('select id from producten where '+ zoeken +' = (%s) and target_audienceid = (%s)', (search, target))
     rug = cursor.fetchall()
     lijst4 = []
     for i in rug:
         lijst4.append(i[0])
     lijst4.remove(prodid)
-    #print(lijst4)
     if status == []:
         if len(lijst4) >= 4 and len(lijst4) <= 10:
             klaar(prodid, naam, lijst4, [])
@@ -136,10 +125,10 @@ def target_audience(prodid, naam, zoeken, search, status):
     else:
         klaar(prodid, naam, status, lijst4)
 
+
 def type(prodid, naam, zoeken, search, target, status):
     cursor.execute('select typeid from producten where id = (%s)', (prodid,))
     type = cursor.fetchall()[0][0]
-    #print(type, search, target)
     cursor.execute('select id from producten where ' + zoeken + ' = (%s) and target_audienceid = (%s) and typeid = (%s)',(search, target, type))
     epyt = cursor.fetchall()
     lijst5 = []
@@ -148,7 +137,6 @@ def type(prodid, naam, zoeken, search, target, status):
     lijst5.remove(prodid)
     if lijst5 == []:
         target_audience(prodid, naam, zoeken, search, ['remove'])
-    #print(len(lijst5), lijst5)
     elif status == []:
         if len(lijst5) >= 4 and len(lijst5) <= 10:
             klaar(prodid, naam, lijst5, [])
@@ -159,10 +147,10 @@ def type(prodid, naam, zoeken, search, target, status):
     else:
         klaar(prodid, naam, status, lijst5)
 
+
 def price(prodid, naam, zoeken, search, target, type, status):
     cursor.execute('select verkoopprijs from producten where id = (%s)', (prodid,))
     prijs = cursor.fetchall()[0][0]
-    #print(prijs)
     if prijs <= 2000:
         prijsrangemax = prijs * 2
         prijsrangemin = prijs // 2
@@ -175,14 +163,12 @@ def price(prodid, naam, zoeken, search, target, type, status):
     else:
         prijsrangemax = prijs * 1.25
         prijsrangemin = prijs // 1.25
-    #print(int(prijsrangemax), int(prijsrangemin))
     cursor.execute('select id from producten where ' + zoeken + ' = (%s) and target_audienceid = (%s) and typeid = (%s) and verkoopprijs > (%s) and verkoopprijs <= (%s)',(search, target, type, int(prijsrangemin), int(prijsrangemax)))
     ding = cursor.fetchall()
     lijst6 = []
     for i in ding:
         lijst6.append(i[0])
     lijst6.remove(prodid)
-    #print('lijst6 '+str(lijst6))
     if lijst6 == []:
         type(prodid, naam, zoeken, search, target, ['remove'])
     elif status == []:
@@ -194,15 +180,11 @@ def price(prodid, naam, zoeken, search, target, type, status):
         elif len(lijst6) > 10:
             brand(prodid, naam, zoeken, search, target, type, prijsrangemax, prijsrangemin, [])
     else:
-        #print('price')
-        #print(status)
-        #print(lijst6)
         klaar(prodid, naam, status, lijst6)
 
 def brand(prodid, naam, zoeken, search, target, type, prijsrangemax, prijsrangemin, status):
     cursor.execute('select merkid from producten where id = (%s)', (prodid,))
     merk = cursor.fetchall()[0][0]
-    #print(merk)
     cursor.execute('select id from producten where ' + zoeken + ' = (%s) and target_audienceid = (%s) and typeid = (%s) and verkoopprijs >= (%s) and verkoopprijs <= (%s) and merkid = (%s)',(search, target, type, int(prijsrangemin), int(prijsrangemax), merk))
     burn = cursor.fetchall()
     lijst7 = []
@@ -212,42 +194,38 @@ def brand(prodid, naam, zoeken, search, target, type, prijsrangemax, prijsrangem
     if lijst7 == []:
         print('lijst7')
         price(prodid, naam, zoeken, search, target, type, ['remove'])
-    #print('lijst7 '+ str(lijst7))
     elif status == []:
         if len(lijst7) < 4:
             price(prodid, naam, zoeken, search, target, type, lijst7)
         else:
-            #print('brand')
+
             klaar(prodid, naam, lijst7, [])
     else:
-        #print('brand')
         klaar(prodid, naam, status, lijst7)
 
+
 def woord(prodid, naam):
-    #print(naam)
     cursor.execute('select naam from merk')
     merken = cursor.fetchall()
     merks = []
     for i in merken:
         merks.append(i[0])
-    #print(merks)
     if ' ' in naam:
         naamlijst = naam.split(' ')
         name = naamlijst[0]
     else:
         name = naam
-    #print(naam)
+
     cursor.execute('select id from producten where naam like (%s)', ('% '+name+' %',))
     ids = cursor.fetchall()
     lijst8 = []
     for i in ids:
         lijst8.append(i[0])
     lijst8.remove(prodid)
-    #print('lijst8', len(lijst8), str(lijst8))
     klaar(prodid, naam, lijst8, [])
+
 
 def modnar(lijst):
     random.shuffle(lijst)
     return lijst[:4]
 
-similar(31705)
