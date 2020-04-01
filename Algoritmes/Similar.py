@@ -6,7 +6,10 @@ c = psycopg2.connect("dbname=(voer naam van je database in) user=postgres passwo
 cursor = c.cursor()
 
 
-def similar(prodid):
+
+def similar(prodid): 
+'''Haalt de subsubcategorie van een product op en alle andere producten met hetzelfde subsubcategorie 
+    en stuurt lijst van 4 producten id's  of meer door naar andere functies'''
     prodid = str(prodid)
     cursor.execute('select sub_sub_categorieid, naam from producten where id = (%s)', (prodid,))
     iets = cursor.fetchall()[0]
@@ -20,7 +23,7 @@ def similar(prodid):
         lijst.append(i[0])
     lijst.remove(prodid)
 
-    if subsubcat == 74:
+    if subsubcat == 74: # '74' staat voor subsubcategorie None
         subcategorie(prodid, productnaam)
     elif len(lijst) >= 4 and len(lijst) <= 10:
         klaar(prodid, productnaam, lijst, [])
@@ -32,9 +35,30 @@ def similar(prodid):
         target_audience(prodid, productnaam, 'sub_sub_categorieid', subsubcat, [])
     else:
         woord(prodid, productnaam)
+        
+        
+  
+ def subcategorie(prodid, naam):
+ ''' Wannneer een prodcut minder dan 4 producten in hetzelfde subsub heeft, wordt subcategorie aangeroepen'''
+    cursor.execute('select sub_categorieid from producten where id = (%s)', (prodid,))
+    subcat = cursor.fetchall()[0][0]
+    cursor.execute('select id from producten where sub_categorieid = (%s)', (subcat,))
+    terug = cursor.fetchall()
+    lijst2 = []
+    for i in terug:
+        lijst2.append(i[0])
+    lijst2.remove(prodid)
+    if len(lijst2) >= 4 and len(lijst2) <= 10:
+        klaar(prodid, naam, lijst2, [])
+    elif len(lijst2) > 10:
+        target_audience(prodid, naam, 'sub_categorieid', subcat, [])
+    elif len(lijst2) < 4:
+        categorie(prodid, naam)
+        
 
 
 def categorie(prodid, naam):
+''' zoekt de categorie van een product op wannneer een product minder dan 4 producten binnen subcatgorie heeft'''
     cursor.execute('select categorieid from producten where id = (%s)', (prodid,))
     cat = cursor.fetchall()[0][0]
     cursor.execute('select id from producten where categorieid = (%s)', (cat,))
@@ -50,22 +74,6 @@ def categorie(prodid, naam):
     elif len(lijst3) < 4:
         woord(prodid, naam)
 
-
-def subcategorie(prodid, naam):
-    cursor.execute('select sub_categorieid from producten where id = (%s)', (prodid,))
-    subcat = cursor.fetchall()[0][0]
-    cursor.execute('select id from producten where sub_categorieid = (%s)', (subcat,))
-    terug = cursor.fetchall()
-    lijst2 = []
-    for i in terug:
-        lijst2.append(i[0])
-    lijst2.remove(prodid)
-    if len(lijst2) >= 4 and len(lijst2) <= 10:
-        klaar(prodid, naam, lijst2, [])
-    elif len(lijst2) > 10:
-        target_audience(prodid, naam, 'sub_categorieid', subcat, [])
-    elif len(lijst2) < 4:
-        categorie(prodid, naam)
 
 
 def target_audience(prodid, naam, zoeken, search, status):
