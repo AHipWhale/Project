@@ -40,6 +40,7 @@ def similar(prodid):
   
  def subcategorie(prodid, naam):
  ''' Wannneer een prodcut minder dan 4 producten in hetzelfde subsub heeft, wordt subcategorie aangeroepen'''
+
     cursor.execute('select sub_categorieid from producten where id = (%s)', (prodid,))
     subcat = cursor.fetchall()[0][0]
     cursor.execute('select id from producten where sub_categorieid = (%s)', (subcat,))
@@ -77,6 +78,7 @@ def categorie(prodid, naam):
 
 
 def target_audience(prodid, naam, zoeken, search, status):
+ ''' wordt aangeroepen wanneer er meer dan 4 producten in de lijst zit, hoort bij de extra filters'''
     cursor.execute('select target_audienceid from producten where id = (%s)', (prodid,))
     target = cursor.fetchall()[0][0]
     cursor.execute('select id from producten where '+ zoeken +\
@@ -104,6 +106,7 @@ def target_audience(prodid, naam, zoeken, search, status):
 
 
 def type(prodid, naam, zoeken, search, target, status):
+    ''' Een extra filter wannneer er meer dan 4 prodcuten in de lijst die van de functie target_audience af komt'''
     cursor.execute('select typeid from producten where id = (%s)', (prodid,))
     type = cursor.fetchall()[0][0]
     cursor.execute('select id from producten where ' + zoeken + \
@@ -127,6 +130,7 @@ def type(prodid, naam, zoeken, search, target, status):
 
 
 def price(prodid, naam, zoeken, search, target, type, status):
+ ''' Hier worden de prijsen van de producten van het lijst vergeleken met de prijs van het orginele product'''
     cursor.execute('select verkoopprijs from producten where id = (%s)', (prodid,))
     prijs = cursor.fetchall()[0][0]
     if prijs <= 2000:
