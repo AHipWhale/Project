@@ -103,7 +103,8 @@ def subcategorie(prodid, naam):
 def target_audience(prodid, naam, zoeken, search, status):
     cursor.execute('select target_audienceid from producten where id = (%s)', (prodid,))
     target = cursor.fetchall()[0][0]
-    cursor.execute('select id from producten where '+ zoeken +' = (%s) and target_audienceid = (%s)', (search, target))
+    cursor.execute('select id from producten where '+ zoeken +\
+                   ' = (%s) and target_audienceid = (%s)', (search, target))
     rug = cursor.fetchall()
     lijst4 = []
     for i in rug:
@@ -129,7 +130,8 @@ def target_audience(prodid, naam, zoeken, search, status):
 def type(prodid, naam, zoeken, search, target, status):
     cursor.execute('select typeid from producten where id = (%s)', (prodid,))
     type = cursor.fetchall()[0][0]
-    cursor.execute('select id from producten where ' + zoeken + ' = (%s) and target_audienceid = (%s) and typeid = (%s)',(search, target, type))
+    cursor.execute('select id from producten where ' + zoeken + \
+                   ' = (%s) and target_audienceid = (%s) and typeid = (%s)',(search, target, type))
     epyt = cursor.fetchall()
     lijst5 = []
     for i in epyt:
