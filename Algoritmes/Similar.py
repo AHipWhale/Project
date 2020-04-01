@@ -34,38 +34,6 @@ def similar(prodid):
         woord(prodid, productnaam)
 
 
-def klaar(prodid, naam, voorkeurlijst, lijst):
-    print(voorkeurlijst)
-    print(lijst)
-    if 'remove' in voorkeurlijst:
-        voorkeurlijst.remove('remove')
-    if 'remove' in lijst:
-        lijst.remove('remove')
-
-    if lijst!=[]:
-        lijst = modnar(lijst)
-        lengte = 4 - len(voorkeurlijst)
-        for i in range(lengte):
-            voorkeurlijst.append(lijst[i])
-    else:
-        if len(voorkeurlijst) > 4:
-            voorkeurlijst = modnar(voorkeurlijst)
-    with open('simielr.csv', 'w', newline='') as csvfile:
-        fieldnames = ['productid', 'productnaam', 'pd_1', 'pd_2', 'pd_3', 'pd_4']
-
-        writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
-        writer.writeheader()
-
-        writer.writerow({'productid': prodid,
-                         'productnaam': naam,
-                         'pd_1': voorkeurlijst[0],
-                         'pd_2': voorkeurlijst[1],
-                         'pd_3': voorkeurlijst[2],
-                         'pd_4': voorkeurlijst[3]
-                         })
-        csvfile.close()
-
-
 def categorie(prodid, naam):
     cursor.execute('select categorieid from producten where id = (%s)', (prodid,))
     cat = cursor.fetchall()[0][0]
@@ -237,3 +205,34 @@ def modnar(lijst):
     random.shuffle(lijst)
     return lijst[:4]
 
+
+def klaar(prodid, naam, voorkeurlijst, lijst):
+    print(voorkeurlijst)
+    print(lijst)
+    if 'remove' in voorkeurlijst:
+        voorkeurlijst.remove('remove')
+    if 'remove' in lijst:
+        lijst.remove('remove')
+
+    if lijst!=[]:
+        lijst = modnar(lijst)
+        lengte = 4 - len(voorkeurlijst)
+        for i in range(lengte):
+            voorkeurlijst.append(lijst[i])
+    else:
+        if len(voorkeurlijst) > 4:
+            voorkeurlijst = modnar(voorkeurlijst)
+    with open('simielr.csv', 'w', newline='') as csvfile:
+        fieldnames = ['productid', 'productnaam', 'pd_1', 'pd_2', 'pd_3', 'pd_4']
+
+        writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
+        writer.writeheader()
+
+        writer.writerow({'productid': prodid,
+                         'productnaam': naam,
+                         'pd_1': voorkeurlijst[0],
+                         'pd_2': voorkeurlijst[1],
+                         'pd_3': voorkeurlijst[2],
+                         'pd_4': voorkeurlijst[3]
+                         })
+        csvfile.close()
