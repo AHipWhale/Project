@@ -1,250 +1,279 @@
 import psycopg2
-import csv
 import random
 
-c = psycopg2.connect("dbname=(voer naam van je database in) user=postgres password=(voer je wachtwoord in)") # Vul zelf in
+c = psycopg2.connect("dbname=DATABASENAAM user=postgres password=DATABASE WACHTWOORD") #Hiermee connect je met je database
 cursor = c.cursor()
+"""In dit algoritme worden vier vergelijkbare producten gereturned.Deze producten worden aan de hand 
+van verschillen de factoren bepaalt."""
 
-
-
-def similar(prodid): 
-'''Haalt de subsubcategorie van een product op en alle andere producten met hetzelfde subsubcategorie 
-    en stuurt lijst van 4 producten id's  of meer door naar andere functies'''
+def similar(prodid):
+    """Deze definitie is het begin van het algoritme. In deze definitie word gekeken naar het subsubcategorie van het
+    meegegeven product id. De definitie pakt de producten met dezelfde subsubcategorie."""
     prodid = str(prodid)
+
     cursor.execute('select sub_sub_categorieid, naam from producten where id = (%s)', (prodid,))
-    iets = cursor.fetchall()[0]
-    subsubcat = iets[0]
-    productnaam = iets[1]
+    terug = cursor.fetchall()[0]
+
+    subsubcat = terug[0]
+    productnaam = terug[1]
+
     cursor.execute('select id from producten where sub_sub_categorieid = (%s)', (subsubcat,))
-    tussen = cursor.fetchall()
+    subsubid = cursor.fetchall()
 
-    lijst = []
-    for i in tussen:
-        lijst.append(i[0])
-    lijst.remove(prodid)
+    subsubids = []
 
-    if subsubcat == 74: # '74' staat voor subsubcategorie None
-        subcategorie(prodid, productnaam)
-    elif len(lijst) >= 4 and len(lijst) <= 10:
-        klaar(prodid, productnaam, lijst, [])
+    for i in subsubid:          #Hier worden alle product ids met hetzelfde subsubcategorie in een lijst gezet.
+        subsubids.append(i[0])
+    subsubids.remove(prodid)    #Het meegegeven product id word uit de lijst gehaald.
 
-    elif len(lijst) < 4:
-        subcategorie(prodid, productnaam)
+    if subsubcat == 74:         #Als het subsubcategorieid 74 is betekent dit dat het geen subsubcategorie heeft.
+        return subcategorie(prodid, productnaam)
 
-    elif len(lijst) > 10:
-        target_audience(prodid, productnaam, 'sub_sub_categorieid', subsubcat, [])
+    elif len(subsubids) >= 4 and len(subsubids) <= 10:  #Als de lijst genoeg product ids bevat, word de definitie klaar uitgevoerd.
+        return klaar(prodid, productnaam, subsubids, [])
+
+    elif len(subsubids) < 4:    #Als de lijst te weinig producten bevat, word er gekeken naar de subcategorie.
+        return subcategorie(prodid, productnaam)
+
+    elif len(subsubids) > 10:   #Als de lijst te veel product ids bevat, word er gekeken naar de target audience.
+        return target_audience(prodid, productnaam, 'sub_sub_categorieid', subsubcat, [])
+
     else:
-        woord(prodid, productnaam)
-        
-        
-  
- def subcategorie(prodid, naam):
- ''' Wannneer een prodcut minder dan 4 producten in hetzelfde subsub heeft, wordt subcategorie aangeroepen'''
+        return woord(prodid, productnaam)
 
-    cursor.execute('select sub_categorieid from producten where id = (%s)', (prodid,))
-    subcat = cursor.fetchall()[0][0]
-    cursor.execute('select id from producten where sub_categorieid = (%s)', (subcat,))
-    terug = cursor.fetchall()
-    lijst2 = []
-    for i in terug:
-        lijst2.append(i[0])
-    lijst2.remove(prodid)
-    if len(lijst2) >= 4 and len(lijst2) <= 10:
-        klaar(prodid, naam, lijst2, [])
-    elif len(lijst2) > 10:
-        target_audience(prodid, naam, 'sub_categorieid', subcat, [])
-    elif len(lijst2) < 4:
-        categorie(prodid, naam)
-        
+def klaar(prodid, naam, voorkeurlijst, lijst):
+    """Deze defintie is de laatste voor dit algoritme. Hier word de voorkeurlijst gereturned.
+       Als er te weinig ids in voorkeurlijst zit word het aangevult met de bepaalde hoeveelheid ids uit lijst. Als er
+       te veel ids in voorkeurlijst zitten, worden er 4 random van gepakt en gereturned. """
+    if 'remove' in voorkeurlijst:   #'remove' word uit de lijst gehaald zodat er alleen maar product ids in zitten.
+        voorkeurlijst.remove('remove')
 
+    if 'remove' in lijst:           #'remove' word uit de lijst gehaald zodat er alleen maar product ids in zitten.
+        lijst.remove('remove')
+
+    if lijst != [] and len(voorkeurlijst) < 4:  #Als lijst niet leeg is en er minder dan 4 elementen in voorkeurlijst zit.
+        lijst = modnar(lijst)                   # Word voorkeurlijst aangevult door elementen uit lijst.
+        lengte = 4 - len(voorkeurlijst)
+        for i in range(lengte):
+            voorkeurlijst.append(lijst[i])
+
+    else:
+        if len(voorkeurlijst) > 4:                      #Als er meer dan 4 elementen in voorkeulijstzit dan worder er
+            voorkeurlijst = modnar(voorkeurlijst)       #via de definitie modnar, vier random product ids gepakt.
+    return voorkeurlijst
 
 def categorie(prodid, naam):
-''' zoekt de categorie van een product op wannneer een product minder dan 4 producten binnen subcatgorie heeft'''
+    """In deze definitie word gekeken naar de categorie als er te weinig product ids in subcategorie en subsubcategorie
+       zitten. In deze definitie word bijna hetzelfde uitgevoerd als bij subsubcategorie en subcategorie
+       alleen dan met categorieën. De definitie pakt de producten met dezelfde categorie."""
     cursor.execute('select categorieid from producten where id = (%s)', (prodid,))
     cat = cursor.fetchall()[0][0]
+
     cursor.execute('select id from producten where categorieid = (%s)', (cat,))
-    terug = cursor.fetchall()
-    lijst3 = []
-    for i in terug:
-        lijst3.append(i[0])
-    lijst3.remove(prodid)
-    if len(lijst3) >= 4 and len(lijst3) <= 10:
-        klaar(prodid, naam, lijst3, [])
-    elif len(lijst3) > 10:
-        target_audience(prodid, naam, 'categorieid', cat, [])
-    elif len(lijst3) < 4:
-        woord(prodid, naam)
+    catid = cursor.fetchall()
 
+    catids = []
 
+    for i in catid:
+        catids.append(i[0])
+    catids.remove(prodid)
+
+    if len(catids) >= 4 and len(catids) <= 10:
+        return klaar(prodid, naam, catids, [])
+
+    elif len(catids) > 10:
+        return target_audience(prodid, naam, 'categorieid', cat, [])
+
+    elif len(catids) < 4:   #Als er te weinig producten zijn met dezelfde categorie, word er gekeken naar de naam van het product.
+        return woord(prodid, naam)
+
+def subcategorie(prodid, naam):
+    """In deze definitie word gekeken naar de subcategorie als er te weinig product ids in subsubcategorie
+           zitten. In deze definitie word bijna hetzelfde uitgevoerd als bij subsubcategorie en categorie
+           alleen dan met subcategorieën. De definitie pakt de producten met dezelfde subcategorie."""
+    cursor.execute('select sub_categorieid from producten where id = (%s)', (prodid,))
+    subcat = cursor.fetchall()[0][0]
+
+    cursor.execute('select id from producten where sub_categorieid = (%s)', (subcat,))
+    subcatid = cursor.fetchall()
+
+    subcatids = []
+    for i in subcatid:
+        subcatids.append(i[0])
+    subcatids.remove(prodid)
+
+    if len(subcatids) >= 4 and len(subcatids) <= 10:
+        return klaar(prodid, naam, subcatids, [])
+
+    elif len(subcatids) > 10:
+        return target_audience(prodid, naam, 'sub_categorieid', subcat, [])
+
+    elif len(subcatids) < 4:
+        return categorie(prodid, naam)
 
 def target_audience(prodid, naam, zoeken, search, status):
- ''' wordt aangeroepen wanneer er meer dan 4 producten in de lijst zit, hoort bij de extra filters'''
+    """In deze definitie word gekeken naar de target audience van het gekozen product en pakt de producten met dezelfde target audience."""
     cursor.execute('select target_audienceid from producten where id = (%s)', (prodid,))
     target = cursor.fetchall()[0][0]
-    cursor.execute('select id from producten where '+ zoeken +\
-                   ' = (%s) and target_audienceid = (%s)', (search, target))
-    rug = cursor.fetchall()
-    lijst4 = []
-    for i in rug:
-        lijst4.append(i[0])
-    lijst4.remove(prodid)
-    if status == []:
-        if len(lijst4) >= 4 and len(lijst4) <= 10:
-            klaar(prodid, naam, lijst4, [])
-        elif len(lijst4) > 10:
-            print(str(len(lijst4)) + ' GROTER')
-            type(prodid, naam, zoeken, search, target, [])
-        elif len(lijst4) < 4:
+
+    cursor.execute('select id from producten where '+ zoeken +' = (%s) and target_audienceid = (%s)', (search, target))
+    targetid = cursor.fetchall()
+
+    targetids = []
+
+    for i in targetid:
+        targetids.append(i[0])
+    targetids.remove(prodid)
+
+    if status == []:    #Als een algoritme naar de volgende filter gaat word het status [] meegegeven.
+                        #Stel dat bij de volgende filter te weinig product ids uitkomen,
+                        #dan geven we deze producten mee naar het vorige algoritme.
+        if len(targetids) >= 4 and len(targetids) <= 10:
+            return klaar(prodid, naam, targetids, [])
+
+        elif len(targetids) > 10:
+            return typetest(prodid, naam, zoeken, search, target, [])
+
+        elif len(targetids) < 4:
             if zoeken == 'sub_sub_categorieid':
-                subcategorie(prodid, naam)
+                return subcategorie(prodid, naam)
+
             elif zoeken == 'sub_categorieid':
-                categorie(prodid, naam)
+                return categorie(prodid, naam)
+
             elif zoeken == 'categorieid':
-                woord(prodid, naam)
-    else:
-        klaar(prodid, naam, status, lijst4)
+                return woord(prodid, naam)
 
+    else:               #Als de status niet leeg is, betekent dit dat er niet genoeg product ids uitkwamen bij de volgende filter.
+                        #Als voorkeurlijst geeft de definitie de ids van status mee. Deze ids zijn beter gefilterd.
+                        #Zo krijgen we het beste resultaat
+        return klaar(prodid, naam, status, targetids)
 
-def type(prodid, naam, zoeken, search, target, status):
-    ''' Een extra filter wannneer er meer dan 4 prodcuten in de lijst die van de functie target_audience af komt'''
+def typetest(prodid, naam, zoeken, search, target, status):
+    """In deze definitie word gekeken naar het type van het gekozen product en pakt de producten met hetzelfde type."""
     cursor.execute('select typeid from producten where id = (%s)', (prodid,))
     type = cursor.fetchall()[0][0]
-    cursor.execute('select id from producten where ' + zoeken + \
-                   ' = (%s) and target_audienceid = (%s) and typeid = (%s)',(search, target, type))
-    epyt = cursor.fetchall()
-    lijst5 = []
-    for i in epyt:
-        lijst5.append(i[0])
-    lijst5.remove(prodid)
-    if lijst5 == []:
-        target_audience(prodid, naam, zoeken, search, ['remove'])
-    elif status == []:
-        if len(lijst5) >= 4 and len(lijst5) <= 10:
-            klaar(prodid, naam, lijst5, [])
-        elif len(lijst5) > 10:
-            price(prodid, naam, zoeken, search, target, type, [])
-        elif len(lijst5) < 4:
-            target_audience(prodid, naam, zoeken, search, lijst5)
-    else:
-        klaar(prodid, naam, status, lijst5)
 
+    cursor.execute('select id from producten where ' + zoeken + ' = (%s) and target_audienceid = (%s) and typeid = (%s)',(search, target, type))
+    typeid = cursor.fetchall()
+
+    typeids = []
+
+    for i in typeid:
+        typeids.append(i[0])
+    typeids.remove(prodid)
+
+    if typeids == []:
+        return target_audience(prodid, naam, zoeken, search, ['remove'])
+
+    elif status == []:
+        if len(typeids) >= 4 and len(typeids) <= 10:
+            return klaar(prodid, naam, typeids, [])
+
+        elif len(typeids) > 10:
+            return price(prodid, naam, zoeken, search, target, type, [])
+
+        elif len(typeids) < 4:
+            return target_audience(prodid, naam, zoeken, search, typeids)
+
+    else:
+        return klaar(prodid, naam, status, typeids)
 
 def price(prodid, naam, zoeken, search, target, type, status):
- ''' Hier worden de prijsen van de producten van het lijst vergeleken met de prijs van het orginele product'''
+    """In deze definitie word gekeken naar de prijs van het gekozen product. We pakken dan producten binnen de pricerange.
+    De pricerange is per prijscategorie anders zodat de resultaten het best zijn."""
     cursor.execute('select verkoopprijs from producten where id = (%s)', (prodid,))
     prijs = cursor.fetchall()[0][0]
+
     if prijs <= 2000:
         prijsrangemax = prijs * 2
         prijsrangemin = prijs // 2
+
     elif prijs > 2000 and prijs <= 5000:
         prijsrangemax = prijs * 1.75
         prijsrangemin = prijs // 1.75
+
     elif prijs > 5000 and prijs <= 30000:
         prijsrangemax = prijs * 1.5
         prijsrangemin = prijs // 1.5
+
     else:
         prijsrangemax = prijs * 1.25
         prijsrangemin = prijs // 1.25
-    cursor.execute('select id from producten where ' + zoeken +\
-                   ' = (%s) and target_audienceid = (%s) and typeid = \
-                   (%s) and verkoopprijs > (%s) and verkoopprijs <= (%s)',\
-                   (search, target, type, int(prijsrangemin), int(prijsrangemax)))
-    ding = cursor.fetchall()
-    lijst6 = []
-    for i in ding:
-        lijst6.append(i[0])
-    lijst6.remove(prodid)
-    if lijst6 == []:
-        type(prodid, naam, zoeken, search, target, ['remove'])
+
+    cursor.execute('select id from producten where ' + zoeken + ' = (%s) and target_audienceid = (%s) and typeid = (%s) and verkoopprijs > (%s) and verkoopprijs <= (%s)',(search, target, type, int(prijsrangemin), int(prijsrangemax)))
+    prijsid = cursor.fetchall()
+
+    prijsids = []
+
+    for i in prijsid:
+        prijsids.append(i[0])
+    prijsids.remove(prodid)
+
+    if prijsids == []:
+        return typetest(prodid, naam, zoeken, search, target, ['remove'])
+
     elif status == []:
-        if len(lijst6) >= 4 and len(lijst6) <= 10:
-            #print('price')
-            klaar(prodid, naam, lijst6, [])
-        elif len(lijst6) < 4:
-            type(prodid, naam, zoeken, search, target, lijst6)
-        elif len(lijst6) > 10:
-            brand(prodid, naam, zoeken, search, target, type, prijsrangemax, prijsrangemin, [])
+        if len(prijsids) >= 4 and len(prijsids) <= 10:
+            return klaar(prodid, naam, prijsids, [])
+
+        elif len(prijsids) < 4:
+            return typetest(prodid, naam, zoeken, search, target, prijsids)
+
+        elif len(prijsids) > 10:
+            return brand(prodid, naam, zoeken, search, target, type, prijsrangemax, prijsrangemin, [])
+
     else:
-        klaar(prodid, naam, status, lijst6)
+        return klaar(prodid, naam, status, prijsids)
 
 def brand(prodid, naam, zoeken, search, target, type, prijsrangemax, prijsrangemin, status):
+    """Deze definitie kijkt naar het merk van het gekozen product en pakt de producten met hetzelfde merk."""
     cursor.execute('select merkid from producten where id = (%s)', (prodid,))
     merk = cursor.fetchall()[0][0]
-    cursor.execute('select id from producten where ' + zoeken +\
-                   '= (%s) and target_audienceid = (%s) and typeid = (%s) and verkoopprijs >= \
-                   (%s) and verkoopprijs <= (%s) and merkid = (%s)',\
-                   (search, target, type, int(prijsrangemin), int(prijsrangemax), merk))
-    burn = cursor.fetchall()
-    lijst7 = []
-    for i in burn:
-        lijst7.append(i[0])
-    lijst7.remove(prodid)
-    if lijst7 == []:
-        print('lijst7')
-        price(prodid, naam, zoeken, search, target, type, ['remove'])
+
+    cursor.execute('select id from producten where ' + zoeken + ' = (%s) and target_audienceid = (%s) and typeid = (%s) and verkoopprijs >= (%s) and verkoopprijs <= (%s) and merkid = (%s)',(search, target, type, int(prijsrangemin), int(prijsrangemax), merk))
+    merkid = cursor.fetchall()
+
+    merkids = []
+
+    for i in merkid:
+        merkids.append(i[0])
+    merkids.remove(prodid)
+
+    if merkids == []:
+        return price(prodid, naam, zoeken, search, target, type, ['remove'])
+
     elif status == []:
-        if len(lijst7) < 4:
-            price(prodid, naam, zoeken, search, target, type, lijst7)
+        if len(merkids) < 4:
+            return price(prodid, naam, zoeken, search, target, type, merkids)
+
         else:
+            return klaar(prodid, naam, merkids, [])
 
-            klaar(prodid, naam, lijst7, [])
     else:
-        klaar(prodid, naam, status, lijst7)
-
+        return klaar(prodid, naam, status, merkids)
 
 def woord(prodid, naam):
-    cursor.execute('select naam from merk')
-    merken = cursor.fetchall()
-    merks = []
-    for i in merken:
-        merks.append(i[0])
+    """In deze definite word er gekeken naar het eerste woord van het gekozen product en pakt de producten die
+       hetzelfde woord bevatten."""
     if ' ' in naam:
         naamlijst = naam.split(' ')
         name = naamlijst[0]
+
     else:
         name = naam
 
     cursor.execute('select id from producten where naam like (%s)', ('% '+name+' %',))
     ids = cursor.fetchall()
+
     lijst8 = []
+
     for i in ids:
         lijst8.append(i[0])
     lijst8.remove(prodid)
-    klaar(prodid, naam, lijst8, [])
-
+    return klaar(prodid, naam, lijst8, [])
 
 def modnar(lijst):
-    random.shuffle(lijst)
-    return lijst[:4]
-
-
-def klaar(prodid, naam, voorkeurlijst, lijst):
-    print(voorkeurlijst)
-    print(lijst)
-    if 'remove' in voorkeurlijst:
-        voorkeurlijst.remove('remove')
-    if 'remove' in lijst:
-        lijst.remove('remove')
-
-    if lijst!=[]:
-        lijst = modnar(lijst)
-        lengte = 4 - len(voorkeurlijst)
-        for i in range(lengte):
-            voorkeurlijst.append(lijst[i])
-    else:
-        if len(voorkeurlijst) > 4:
-            voorkeurlijst = modnar(voorkeurlijst)
-    with open('simielr.csv', 'w', newline='') as csvfile:
-        fieldnames = ['productid', 'productnaam', 'pd_1', 'pd_2', 'pd_3', 'pd_4']
-
-        writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
-        writer.writeheader()
-
-        writer.writerow({'productid': prodid,
-                         'productnaam': naam,
-                         'pd_1': voorkeurlijst[0],
-                         'pd_2': voorkeurlijst[1],
-                         'pd_3': voorkeurlijst[2],
-                         'pd_4': voorkeurlijst[3]
-                         })
-        csvfile.close()
+    """Deze definitie zorgt ervoor dat de meegegeven lijst 4 random elementen uit die lijst overhoud."""
+    random.shuffle(lijst)   #De lijst word gehusselt
+    return lijst[:4]        #De eerste 4 elementen word gereturned
